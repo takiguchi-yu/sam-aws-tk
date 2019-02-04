@@ -23,7 +23,7 @@ $(function() {
       dataType:'json'
     })
     .done((data) => {
-      result.innerHTML = BASE_HOST + '/' + data.mappingId;
+      result.innerHTML = BASE_HOST + '/' + data.urlId;
     })
     .fail((data) => {
       result.innerHTML = 'FAIL';

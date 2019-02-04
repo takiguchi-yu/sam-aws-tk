@@ -28,7 +28,7 @@ Resources:
           TABLE_NAME: !Ref TableName
           IS_CORS: IsCorsDefined
           CORS_ORIGIN: !Ref CorsOrigin
-          PRIMARY_KEY: !Sub ${TableName}Id
+          PRIMARY_KEY: !Sub "${TableName}Id"
           TZ: Asia/Tokyo
       Policies:
         - DynamoDBCrudPolicy:
@@ -44,6 +44,24 @@ Resources:
           Properties:
             Path: /save
             Method: OPTIONS
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /{hash}
+            Method: GET
+  GetMethod: 
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: "MyApi"
+      ResourceId:
+        Fn::GetAtt:
+          - "MyApi"
+          - "RootResourceId"
+      HttpMethod: "GET"
+      AuthorizationType: "NONE"
+      Integration:
+        Type: "MOCK"
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
