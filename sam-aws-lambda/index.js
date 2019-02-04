@@ -1,45 +1,69 @@
-'use strict'
-
 const AWS = require('aws-sdk');
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const uuidv4 = require('uuid/v4');
+const dynamodb = new AWS.DynamoDB.DocumentClient();
 const processResponse = require('./process-response.js');
 const TABLE_NAME = process.env.TABLE_NAME;
 const IS_CORS = process.env.IS_CORS;
 const PRIMARY_KEY = process.env.PRIMARY_KEY;
-const util = require('util');
+const crypto = require('crypto');
+const moment = require('moment');
 
-console.log('Loading function');
-
-exports.handler = (event) => {
-    console.log('HttpMethod: ' + event.httpMethod);
-    console.log('Body: ' + event.body);
+exports.handler = (event, context, callback) => {
+    
     if (event.httpMethod === 'OPTIONS') {
-		return Promise.resolve(processResponse(IS_CORS));
+		return Promise.resolve(processResponse(event, IS_CORS));
 	}
-    if (!event.body) {
-        return Promise.resolve(processResponse(IS_CORS, 'invalid', 400));
-    }
-    let item = JSON.parse(event.body);
-    item[PRIMARY_KEY] = uuidv4();
+    
+    switch (event.httpMethod) {
+    case 'GET':
+        let getItemParams = {
+            TableName: TABLE_NAME,
+            Key: {
+                'mappingId': event.hash
+            }
+        };
 
-    for (var key in item) {
-        console.log(key + ': ' +item[key]);
-    }
-
-    let params = {
-        TableName: TABLE_NAME,
-        Item: item
-    }
-    return dynamoDb.put(params)
-    .promise()
-    .then(() => (processResponse(IS_CORS)))
-    .catch(dbError => {
-        let errorResponse = `Error: Execution update, caused a Dynamodb error, please look at your logs.`;
-        if (dbError.code === 'ValidationException') {
-            if (dbError.message.includes('reserved keyword')) errorResponse = `Error: You're using AWS reserved keywords as attributes`;
+        return dynamodb.get(getItemParams)
+        .promise()
+        .then((data) => (processResponse(event, IS_CORS, data.Item)))
+        .catch(dbError => {
+            let errorResponse = `Error: Execution select, caused a Dynamodb error, please look at your logs.`;
+            console.log(dbError);
+            return processResponse(event, IS_CORS, errorResponse, 500);
+        });
+    case 'POST':
+        if (! event.body) {
+            return Promise.resolve(processResponse(event, IS_CORS, 'invalid', 400));
         }
-        console.log(dbError);
-        return processResponse(IS_CORS, errorResponse, 500);
-    });
+
+        let body = JSON.parse(event.body);
+
+        if (! body.url) {
+            return Promise.resolve(processResponse(event, IS_CORS, 'invalid', 400));
+        }
+
+        let item = {
+            "urlId": crypto.randomBytes(8).toString('hex'),
+            "url": body.url,
+            "createdAt": moment().format("YYYY/MM/DD HH:mm:s")
+        };
+        
+        let putItemParams = {
+            TableName: TABLE_NAME,
+            Item: item
+        };
+
+        return dynamodb.put(putItemParams)
+        .promise()
+        .then(() => (processResponse(event, IS_CORS, item)))
+        .catch(dbError => {
+            let errorResponse = `Error: Execution update or insert, caused a Dynamodb error, please look at your logs.`;
+            if (dbError.code === 'ValidationException') {
+                if (dbError.message.includes('reserved keyword')) errorResponse = `Error: You're using AWS reserved keywords as attributes`;
+            }
+            console.log(dbError);
+            return processResponse(event, IS_CORS, errorResponse, 500);
+        });
+    default:
+        return Promise.resolve(processResponse(event, IS_CORS, 'invalid', 400));
+    }
 };

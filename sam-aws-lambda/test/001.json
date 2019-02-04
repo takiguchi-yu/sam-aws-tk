@@ -3,5 +3,5 @@
     "Content-Type": "application/json"
   },
   "httpMethod": "POST",
-  "body": "{\"url\": \"https://www.google.co.jp/\",\"fuga\": \"fugafuga\"}"
+  "body": "{\"hoge\": \"hogehoge\",\"fuga\": \"fugafuga\"}"
 }
