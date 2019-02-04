@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>URL Shorter</title>
+    <link rel="shortcut icon" href="img/favicon.ico">
+    <link href="css/styles.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <h1>URL Shorter</h1>
+    <p>Original URL <input type="text" id="org_url" placeholder="https://"></p>
+    <button id="btn" type="button">Convert</button>
+    <p id="result"></p>
+    <button id="copyBtn" type="button" data-clipboard-target="#result">Copy</button>
+    <p id="copy_result"></p>
+    <p id="footer">【お問い合わせ：@dev-open】</p>
+  </body>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/clipboard.js/1.5.3/clipboard.min.js"></script>
+  <script type="text/javascript" src="js/main.js"></script>
+</html>
